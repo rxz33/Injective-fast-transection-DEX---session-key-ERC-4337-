@@ -36,7 +36,10 @@ export function startVaultListener(
     vaultAddress: string,
     onTradeRequested: (payload: TradeRequestedPayload) => Promise<void>
 ) {
-    const rpcUrl = process.env.INEVM_RPC_URL!;
+    const rpcUrl =
+        process.env.RELAY_RPC_URL ||
+        process.env.RPC_PROXY_URL ||
+        process.env.INEVM_RPC_URL!;
     console.log(`Event listener using HTTP polling → ${rpcUrl}`);
 
     const provider = createHttpProvider(rpcUrl);

@@ -13,7 +13,11 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 
 const PORT = Number(process.env.PORT || 8787);
-const INEVM_RPC_URL = process.env.INEVM_RPC_URL || "";
+const INEVM_RPC_URL =
+    process.env.RELAY_RPC_URL ||
+    process.env.RPC_PROXY_URL ||
+    process.env.INEVM_RPC_URL ||
+    "";
 const WS_RPC_URL = process.env.WS_RPC_URL || "";
 const VAULT = process.env.VAULT_CONTRACT || "";
 const RELAY_SIGNER_EVM_PRIVATE_KEY = process.env.RELAY_SIGNER_EVM_PRIVATE_KEY || "";

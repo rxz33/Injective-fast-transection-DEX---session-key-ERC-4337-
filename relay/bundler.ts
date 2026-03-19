@@ -2,10 +2,16 @@ import { ethers } from "ethers";
 import * as dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
 
-// ✅ Direct relay mode — bypasses bundler entirely
-// Uses HTTP provider with staticNetwork to avoid IPv6 issues
+const relayRpcUrl =
+    process.env.RELAY_RPC_URL ||
+    process.env.RPC_PROXY_URL ||
+    process.env.INEVM_RPC_URL ||
+    "http://127.0.0.1:8547";
+
+// Direct relay mode — no bundler needed
+// HTTP provider with staticNetwork to avoid IPv6 detection calls
 const provider = new ethers.JsonRpcProvider(
-    process.env.INEVM_RPC_URL!,
+    relayRpcUrl,
     {
         chainId: parseInt(process.env.INEVM_CHAIN_ID || "1439"),
         name: "injective-testnet"
@@ -24,11 +30,12 @@ const vaultAbi = [
 
 export async function sendUserOperation(userOp: any): Promise<string> {
     console.log("UserOp received:", JSON.stringify(userOp, null, 2));
+    console.log("Relay RPC:", relayRpcUrl);
 
     const vaultAddress = process.env.VAULT_CONTRACT;
     if (!vaultAddress) throw new Error("VAULT_CONTRACT not set in .env");
 
-    // Handle both shapes frontend might send
+    // Extract fields — handle both shapes frontend might send
     const user = userOp.sender || userOp.user || relaySigner.address;
     const pair = userOp.pair || userOp.tradePair || "INJ/USDT";
     const qty = userOp.qty || userOp.amount || "1";
@@ -40,9 +47,16 @@ export async function sendUserOperation(userOp: any): Promise<string> {
     const vault = new ethers.Contract(vaultAddress, vaultAbi, relaySigner);
 
     const feeData = await provider.getFeeData();
+    const minFee = ethers.parseUnits("1", "gwei");
     const overrides = {
-        maxFeePerGas: feeData.maxFeePerGas ?? ethers.parseUnits("1", "gwei"),
-        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? ethers.parseUnits("1", "gwei"),
+        maxFeePerGas:
+            feeData.maxFeePerGas && feeData.maxFeePerGas > minFee
+                ? feeData.maxFeePerGas
+                : minFee,
+        maxPriorityFeePerGas:
+            feeData.maxPriorityFeePerGas && feeData.maxPriorityFeePerGas > minFee
+                ? feeData.maxPriorityFeePerGas
+                : minFee,
         gasLimit: 300000,
     };
 
@@ -56,7 +70,7 @@ export async function sendUserOperation(userOp: any): Promise<string> {
 
     console.log("Tx sent:", tx.hash);
     const receipt = await tx.wait();
-    console.log("✅ Confirmed:", receipt!.hash);
+    console.log("Confirmed:", receipt!.hash);
 
     return receipt!.hash;
 }
