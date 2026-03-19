@@ -69,13 +69,13 @@ export async function sendUserOperation(userOp: any): Promise<string> {
     );
 
     console.log("Tx sent:", tx.hash);
-    
+
     // ✅ Return hash immediately, don't wait for confirmation
     // Frontend will poll for confirmation separately
     setImmediate(() => {
-        tx.wait().then((receipt) => {
+        tx.wait().then((receipt: ethers.TransactionReceipt | null) => {
             console.log("Confirmed:", receipt?.hash);
-        }).catch((err) => {
+        }).catch((err: unknown) => {
             console.error("Tx failed:", err);
         });
     });

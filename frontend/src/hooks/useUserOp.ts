@@ -7,6 +7,7 @@ import { pollOrderStatus, submitUserOp } from "../lib/injective";
 export type TradeResult = {
     userOpHash: string;
     txHash: string | null;
+    status: "pending" | "confirmed";
 };
 
 export function useUserOp() {
@@ -59,18 +60,21 @@ export function useUserOp() {
             userOp.signature = signature;
 
             const submitted = await submitUserOp(userOp);
-            let status = "pending";
+            let status: "pending" | "confirmed" = "pending";
             let txHash: string | null = null;
 
-            for (let i = 0; i < 60 && status !== "confirmed"; i++) {
-                await new Promise((r) => setTimeout(r, 500));
+            // Quick best-effort poll for already-mined transactions without blocking UX.
+            try {
                 const polled = await pollOrderStatus(submitted.userOpHash);
-                status = polled.status;
-                txHash = polled.txHash;
-                if (status === "confirmed") break;
+                if (polled.status === "confirmed") {
+                    status = "confirmed";
+                    txHash = polled.txHash;
+                }
+            } catch {
+                // Ignore transient poll errors; background confirmation handles eventual consistency.
             }
 
-            return { userOpHash: submitted.userOpHash, txHash };
+            return { userOpHash: submitted.userOpHash, txHash, status };
         } finally {
             setPending(false);
         }

@@ -13,6 +13,9 @@ type HistoryRow = {
     txHash?: string | null;
 };
 
+const TX_EXPLORER_BASE =
+    import.meta.env.VITE_TX_EXPLORER_BASE || "https://testnet.blockscout.injective.network/tx";
+
 export default function Portfolio() {
     const { session, remainingText, clearSession } = useSessionKey();
     const [history, setHistory] = useState<HistoryRow[]>([]);
@@ -82,6 +85,7 @@ export default function Portfolio() {
                                 <th>Price</th>
                                 <th>Time</th>
                                 <th>Status</th>
+                                <th>Tx</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -92,7 +96,21 @@ export default function Portfolio() {
                                     <td>{row.qty.toFixed(4)}</td>
                                     <td className="font-mono">{row.price.toFixed(4)}</td>
                                     <td>{new Date(row.ts).toLocaleString()}</td>
-                                    <td>{row.status}</td>
+                                    <td className={row.status === "confirmed" ? "text-accent" : "text-amber-300"}>{row.status}</td>
+                                    <td>
+                                        {row.txHash ? (
+                                            <a
+                                                href={`${TX_EXPLORER_BASE}/${row.txHash}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="font-mono text-xs text-accent underline"
+                                            >
+                                                {row.txHash.slice(0, 10)}...{row.txHash.slice(-8)}
+                                            </a>
+                                        ) : (
+                                            <span className="text-slate-500">-</span>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
