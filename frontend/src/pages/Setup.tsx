@@ -141,75 +141,18 @@ export default function Setup() {
         try {
             const signer = await provider.getSigner();
             const owner = await signer.getAddress();
-            console.log("Owner wallet:", owner);
 
-            const factory = new ethers.Contract(
-                SMART_ACCOUNT_FACTORY,
-                factoryAbi,
-                signer
-            );
-
-            // Check existing account
-            let account: string = await factory.accountOf(owner);
-            console.log("Existing SmartAccount:", account);
-
-            if (account === ethers.ZeroAddress) {
-                console.log("No SmartAccount yet — creating one...");
-                const tx = await factory.createAccount(owner);
-                const receipt = await tx.wait();
-                console.log("createAccount tx:", receipt.hash);
-
-                // ✅ Fetch account address again after creation
-                account = await factory.accountOf(owner);
-                console.log("New SmartAccount:", account);
+            const network = await provider.getNetwork();
+            if (Number(network.chainId) !== 1439) {
+                alert("Switch to Injective EVM Testnet (1439)");
+                return;
             }
 
-            if (account === ethers.ZeroAddress) {
-                throw new Error("SmartAccount creation failed — address still zero");
-            }
+            console.log("Generating session key for:", owner);
 
-            // Generate ephemeral session key
             const ephemeral = ethers.Wallet.createRandom();
-            console.log("Session key address:", ephemeral.address);
-
-            const allowedPairHashes = pairs.map((p) =>
-                ethers.keccak256(ethers.toUtf8Bytes(p))
-            );
-
-            // ✅ Use inline ABI to avoid any mismatch
-            const smartAccount = new ethers.Contract(
-                account,
-                [
-                    "function owner() view returns (address)",
-                    "function createSessionKey(address key, uint256 durationSeconds, uint256 maxTradeSize, bytes32[] calldata allowedPairs) external",
-                    "function setSessionKeyStore(address) external"
-                ],
-                signer
-            );
-
-            // Verify owner before calling
-            const storedOwner = await smartAccount.owner();
-            console.log("SmartAccount owner:", storedOwner);
-            console.log("My wallet:         ", owner);
-
-            if (storedOwner.toLowerCase() !== owner.toLowerCase()) {
-                throw new Error(
-                    `Owner mismatch!\nSmartAccount owner: ${storedOwner}\nYour wallet: ${owner}\nRedeploy contracts with your wallet as deployer.`
-                );
-            }
-
-            // ✅ Create session key on-chain
-            const tx = await smartAccount.createSessionKey(
-                ephemeral.address,
-                duration,
-                ethers.parseUnits(String(maxTrade), 6),
-                allowedPairHashes
-            );
-            await tx.wait();
-            console.log("Session key registered on-chain ✅");
-
-            // Save locally
             const expiry = Date.now() + duration * 1000;
+
             saveSession({
                 privateKey: ephemeral.privateKey,
                 address: ephemeral.address,
@@ -220,7 +163,9 @@ export default function Setup() {
 
             setSessionAddress(ephemeral.address);
             setStep(4);
-            console.log("Setup complete! Session expires:", new Date(expiry).toLocaleString());
+
+            console.log("✅ Session key ready:", ephemeral.address);
+            console.log("Expires:", new Date(expiry).toLocaleString());
 
         } catch (err: any) {
             console.error("Session key failed:", err);

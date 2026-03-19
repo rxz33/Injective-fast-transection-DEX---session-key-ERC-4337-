@@ -1,40 +1,77 @@
+import { ethers } from "ethers";
 import * as dotenv from "dotenv";
-
 dotenv.config({ path: "../.env" });
 
-const bundlerUrl = process.env.PIMLICO_BUNDLER_URL || "";
-const entryPoint = process.env.ENTRYPOINT || "";
+// ✅ Direct relay mode — bypasses bundler entirely
+// Uses HTTP provider with staticNetwork to avoid IPv6 issues
+const provider = new ethers.JsonRpcProvider(
+    process.env.INEVM_RPC_URL!,
+    {
+        chainId: parseInt(process.env.INEVM_CHAIN_ID || "1439"),
+        name: "injective-testnet"
+    },
+    { staticNetwork: true }
+);
 
-type RpcResponse<T> = { result?: T; error?: { message: string } };
+const relaySigner = new ethers.Wallet(
+    process.env.RELAY_SIGNER_EVM_PRIVATE_KEY!,
+    provider
+);
 
-async function rpcCall<T>(method: string, params: unknown[]): Promise<T> {
-    if (!bundlerUrl) {
-        throw new Error("PIMLICO_BUNDLER_URL not configured");
-    }
+const vaultAbi = [
+    "function executeTrade(address user, bytes32 pair, uint256 qty, uint8 side) external",
+];
 
-    const res = await fetch(bundlerUrl, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: Date.now(),
-            method,
-            params
-        })
-    });
+export async function sendUserOperation(userOp: any): Promise<string> {
+    console.log("UserOp received:", JSON.stringify(userOp, null, 2));
 
-    const json = (await res.json()) as RpcResponse<T>;
-    if (json.error) {
-        throw new Error(json.error.message);
-    }
+    const vaultAddress = process.env.VAULT_CONTRACT;
+    if (!vaultAddress) throw new Error("VAULT_CONTRACT not set in .env");
 
-    return json.result as T;
+    // Handle both shapes frontend might send
+    const user = userOp.sender || userOp.user || relaySigner.address;
+    const pair = userOp.pair || userOp.tradePair || "INJ/USDT";
+    const qty = userOp.qty || userOp.amount || "1";
+    const side = userOp.side ?? 0;
+
+    console.log(`Trade: ${side === 0 ? "BUY" : "SELL"} ${qty} ${pair} for ${user}`);
+
+    const pairBytes32 = ethers.keccak256(ethers.toUtf8Bytes(pair));
+    const vault = new ethers.Contract(vaultAddress, vaultAbi, relaySigner);
+
+    const feeData = await provider.getFeeData();
+    const overrides = {
+        maxFeePerGas: feeData.maxFeePerGas ?? ethers.parseUnits("1", "gwei"),
+        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? ethers.parseUnits("1", "gwei"),
+        gasLimit: 300000,
+    };
+
+    const tx = await vault.executeTrade(
+        user,
+        pairBytes32,
+        ethers.parseUnits(String(qty), 18),
+        side,
+        overrides
+    );
+
+    console.log("Tx sent:", tx.hash);
+    const receipt = await tx.wait();
+    console.log("✅ Confirmed:", receipt!.hash);
+
+    return receipt!.hash;
 }
 
-export async function sendUserOperation(userOp: unknown): Promise<string> {
-    return rpcCall<string>("eth_sendUserOperation", [userOp, entryPoint]);
-}
-
-export async function getUserOperationReceipt(userOpHash: string): Promise<any> {
-    return rpcCall<any>("eth_getUserOperationReceipt", [userOpHash]);
+export async function getUserOperationReceipt(hash: string) {
+    try {
+        const receipt = await provider.getTransactionReceipt(hash);
+        if (!receipt) return null;
+        return {
+            receipt: {
+                transactionHash: receipt.hash,
+                status: receipt.status
+            }
+        };
+    } catch {
+        return null;
+    }
 }
