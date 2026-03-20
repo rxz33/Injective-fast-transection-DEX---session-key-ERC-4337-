@@ -14,9 +14,67 @@ import { useSessionKey } from "../hooks/useSessionKey";
 
 type DurationOption = 3600 | 86400;
 type MaxOption = 100 | 500;
+type WalletOption = {
+    id: string;
+    name: string;
+    provider: any;
+};
 
 const PAIRS = ["INJ/USDT", "ETH/USDT"];
 const REQUIRED_CHAIN_ID = 1439;
+const INJECTIVE_CHAIN_HEX = "0x59F";
+
+function inferWalletName(provider: any): string {
+    if (!provider) {
+        return "Injected Wallet";
+    }
+    if (provider.isRabby) {
+        return "Rabby";
+    }
+    if (provider.isBraveWallet) {
+        return "Brave Wallet";
+    }
+    if (provider.isCoinbaseWallet) {
+        return "Coinbase Wallet";
+    }
+    if (provider.isMetaMask) {
+        return "MetaMask";
+    }
+    return "Injected Wallet";
+}
+
+function discoverWallets(): WalletOption[] {
+    const win = window as any;
+    const candidates: any[] = [];
+
+    if (Array.isArray(win.ethereum?.providers)) {
+        candidates.push(...win.ethereum.providers);
+    }
+    if (win.ethereum) {
+        candidates.push(win.ethereum);
+    }
+    if (win.rabby?.ethereum) {
+        candidates.push(win.rabby.ethereum);
+    }
+
+    const seen = new Set<any>();
+    const unique = candidates.filter((provider) => {
+        if (!provider || seen.has(provider)) {
+            return false;
+        }
+        seen.add(provider);
+        return true;
+    });
+
+    return unique.map((provider, idx) => {
+        const name = inferWalletName(provider);
+        return {
+            id: `${name.toLowerCase().replace(/\s+/g, "-")}-${idx}`,
+            name,
+            provider
+        };
+    });
+}
 
 export default function Setup() {
     const nav = useNavigate();
@@ -37,6 +95,11 @@ export default function Setup() {
     const [walletInjBalance, setWalletInjBalance] = useState("-");
     const [vaultInjBalance, setVaultInjBalance] = useState("-");
     const [balanceLoading, setBalanceLoading] = useState(false);
+    const [walletOptions, setWalletOptions] = useState<WalletOption[]>([]);
+    const [showWalletPicker, setShowWalletPicker] = useState(false);
+    const [selectedWalletName, setSelectedWalletName] = useState("");
+
+    const hasActiveSession = Boolean(session?.address && session.expiry > Date.now());
 
     const networkText = useMemo(() => (provider ? "inEVM Testnet" : "not connected"), [provider]);
 
@@ -67,10 +130,37 @@ export default function Setup() {
         [provider, walletAddress]
     );
 
-    async function connectWallet() {
-        const eth = (window as any).ethereum;
+    useEffect(() => {
+        setWalletOptions(discoverWallets());
+    }, []);
+
+    async function autoAdvanceAfterConnect(nextProvider: ethers.BrowserProvider, address: string) {
+        let nextStep = 2;
+        try {
+            const vaultBal = await new ethers.Contract(VAULT_ADDRESS, vaultAbi, nextProvider).getBalance(
+                address,
+                ethers.ZeroAddress
+            );
+            if (vaultBal > 0n) {
+                nextStep = 3;
+            }
+        } catch {
+            nextStep = 2;
+        }
+
+        if (hasActiveSession && session?.address) {
+            setSessionAddress(session.address);
+            setStep(4);
+            return;
+        }
+
+        setStep(nextStep);
+    }
+
+    async function connectWallet(selectedProvider?: any, selectedName?: string) {
+        const eth = selectedProvider || (window as any).ethereum;
         if (!eth) {
-            alert("MetaMask is required");
+            alert("No wallet extension found. Install MetaMask, Rabby, Brave Wallet, or Coinbase Wallet.");
             return;
         }
 
@@ -85,7 +175,7 @@ export default function Setup() {
                 try {
                     await eth.request({
                         method: "wallet_switchEthereumChain",
-                        params: [{ chainId: "0x59F" }], // 1439 in hex
+                        params: [{ chainId: INJECTIVE_CHAIN_HEX }], // 1439 in hex
                     });
                 } catch (switchErr: any) {
                     // Chain not added yet — add it
@@ -93,7 +183,7 @@ export default function Setup() {
                         await eth.request({
                             method: "wallet_addEthereumChain",
                             params: [{
-                                chainId: "0x59F",
+                                chainId: INJECTIVE_CHAIN_HEX,
                                 chainName: "Injective EVM Testnet",
                                 nativeCurrency: {
                                     name: "INJ",
@@ -112,13 +202,41 @@ export default function Setup() {
             const address = await signer.getAddress();
             setProvider(next);
             setWalletAddress(address);
-            setStep(2);
+            setSelectedWalletName(selectedName || inferWalletName(eth));
+            setShowWalletPicker(false);
             await refreshBalances(next, address);
+            await autoAdvanceAfterConnect(next, address);
 
         } catch (err: any) {
             console.error("Connect failed:", err);
             alert(`Connection failed: ${err.message}`);
         }
+    }
+
+    function onConnectClick() {
+        if (walletAddress) {
+            setProvider(null);
+            setWalletAddress("");
+            setSelectedWalletName("");
+            setShowWalletPicker(false);
+            setWalletInjBalance("-");
+            setVaultInjBalance("-");
+            setStep(1);
+            return;
+        }
+
+        const currentWallets = discoverWallets();
+        setWalletOptions(currentWallets);
+
+        if (currentWallets.length === 0) {
+            alert("No supported wallet detected. Install MetaMask, Rabby, Brave Wallet, or Coinbase Wallet.");
+            return;
+        }
+        if (currentWallets.length === 1) {
+            connectWallet(currentWallets[0].provider, currentWallets[0].name);
+            return;
+        }
+        setShowWalletPicker(true);
     }
 
     // ✅ FIXED: Use native INJ deposit instead of USDT ERC-20
@@ -281,16 +399,40 @@ export default function Setup() {
                 <div className="panel p-5">
                     <div className="mb-4 text-sm uppercase tracking-widest text-slate-400">Step 1</div>
                     <button
-                        onClick={connectWallet}
+                        onClick={onConnectClick}
                         className="rounded-lg bg-accent px-4 py-2 font-semibold text-black"
                     >
-                        Connect MetaMask
+                        {walletAddress ? "Disconnect Wallet" : "Connect Wallet"}
                     </button>
+                    {showWalletPicker && walletOptions.length > 1 && (
+                        <div className="mt-3 space-y-2">
+                            <p className="text-xs text-slate-300">Choose wallet:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {walletOptions.map((wallet) => (
+                                    <button
+                                        key={wallet.id}
+                                        onClick={() => connectWallet(wallet.provider, wallet.name)}
+                                        className="rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-sm"
+                                    >
+                                        {wallet.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <p className="mt-3 text-sm">
                         Wallet: <span className="font-mono">{walletAddress || "-"}</span>
                     </p>
                     <p className="text-sm">
                         Network: <span className="font-mono">{networkText}</span>
+                    </p>
+                    {selectedWalletName && walletAddress && (
+                        <p className="mt-2 text-xs text-slate-400">
+                            Connected with: <span className="font-mono">{selectedWalletName}</span>
+                        </p>
+                    )}
+                    <p className="mt-2 text-xs text-slate-400">
+                        After connect, setup auto-continues to the next unlocked step.
                     </p>
                     {/* ✅ Show warning if wrong network */}
                     {provider && (

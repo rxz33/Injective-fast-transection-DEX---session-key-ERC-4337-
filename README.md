@@ -4,6 +4,9 @@ A decentralized exchange (DEX) built on Injective with ERC-4337 account abstract
 
 **Live on Injective EVM Testnet (Chain 1439)**
 
+For a quick evaluator-friendly overview, start here:
+- [README_PREFACE.md](README_PREFACE.md)
+
 ---
 
 ## 🚀 Quick Start (After Cloning)
