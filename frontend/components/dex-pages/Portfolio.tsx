@@ -199,6 +199,31 @@ export default function Portfolio() {
                                 </div>
                                 <div className="text-right space-y-1">
                                     {tx.txHash ? (
+                                        <>
+                                            <a
+                                                href={`https://testnet.blockscout.injective.network/tx/${tx.txHash}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-mono text-accent text-[10px] font-bold hover:underline break-all"
+                                                title={tx.txHash}
+                                            >
+                                                {tx.txHash.substring(0, 8)}...{tx.txHash.substring(tx.txHash.length - 6)}
+                                            </a>
+                                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter opacity-50">
+                                                Tx
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="text-accent text-[10px] font-bold">Pending</div>
+                                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter opacity-50">
+                                                Tx
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="text-right space-y-1">
+                                    {tx.txHash ? (
                                         <a
                                             href={`https://explorer.injective.network/transaction/${tx.txHash}`}
                                             target="_blank"

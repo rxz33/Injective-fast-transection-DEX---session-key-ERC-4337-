@@ -464,7 +464,7 @@ export default function Setup() {
                             <span className="text-amber-400 font-bold text-lg">⚙</span>
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold">Protocol Maintenance</h3>
+                            <h3 className="text-lg font-bold">System Maintenance <span className="text-amber-200">(Sponsors Only)</span></h3>
                             <p className="text-sm text-muted-foreground">Configure the paymaster status.</p>
                         </div>
                     </div>
