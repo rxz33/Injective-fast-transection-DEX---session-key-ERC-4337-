@@ -15,6 +15,9 @@ export function useSessionKey() {
     const [now, setNow] = useState(Date.now());
 
     useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
         const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
         if (raw) {
             setSession(JSON.parse(raw));
@@ -40,11 +43,17 @@ export function useSessionKey() {
     }, [remainingMs]);
 
     function saveSession(next: SessionState) {
+        if (typeof window === "undefined") {
+            return;
+        }
         sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next));
         setSession(next);
     }
 
     function clearSession() {
+        if (typeof window === "undefined") {
+            return;
+        }
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
         setSession(null);
     }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchOrderbook, fetchTrades } from "../lib/injective";
+import { fetchOrderbook, fetchTrades } from "@/lib/injective";
 
 export function usePriceFeed(pair: string) {
     const [prices, setPrices] = useState<number[]>([]);

@@ -1,7 +1,7 @@
-import { Link, Route, Routes, useLocation } from "react-router-dom";
-import Setup from "./pages/Setup";
-import Terminal from "./pages/Terminal";
-import Portfolio from "./pages/Portfolio";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const nav = [
     { to: "/", label: "Setup" },
@@ -9,8 +9,8 @@ const nav = [
     { to: "/portfolio", label: "Portfolio" }
 ];
 
-export default function App() {
-    const location = useLocation();
+export default function AppShell({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
 
     return (
         <div className="min-h-screen">
@@ -22,13 +22,12 @@ export default function App() {
                     </div>
                     <nav className="flex items-center gap-2">
                         {nav.map((item) => {
-                            const active = location.pathname === item.to;
+                            const active = pathname === item.to;
                             return (
                                 <Link
                                     key={item.to}
-                                    to={item.to}
-                                    className={`rounded-lg px-3 py-1.5 text-sm transition ${active ? "bg-accent/20 text-accent border border-accent/40" : "border border-white/10 hover:border-white/30"
-                                        }`}
+                                    href={item.to}
+                                    className={`rounded-lg px-3 py-1.5 text-sm transition ${active ? "bg-accent/20 text-accent border border-accent/40" : "border border-white/10 hover:border-white/30"}`}
                                 >
                                     {item.label}
                                 </Link>
@@ -36,12 +35,7 @@ export default function App() {
                         })}
                     </nav>
                 </header>
-
-                <Routes>
-                    <Route path="/" element={<Setup />} />
-                    <Route path="/terminal" element={<Terminal />} />
-                    <Route path="/portfolio" element={<Portfolio />} />
-                </Routes>
+                {children}
             </div>
         </div>
     );

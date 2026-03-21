@@ -1,16 +1,15 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ethers } from "ethers";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import {
     PAYMASTER_ADDRESS,
-    SMART_ACCOUNT_FACTORY,
     VAULT_ADDRESS,
-    factoryAbi,
     paymasterAbi,
-    smartAccountAbi,
     vaultAbi
-} from "../lib/contracts";
-import { useSessionKey } from "../hooks/useSessionKey";
+} from "@/lib/contracts";
+import { useSessionKey } from "@/hooks/useSessionKey";
 
 type DurationOption = 3600 | 86400;
 type MaxOption = 100 | 500;
@@ -77,7 +76,7 @@ function discoverWallets(): WalletOption[] {
 }
 
 export default function Setup() {
-    const nav = useNavigate();
+    const router = useRouter();
     const { saveSession, remainingText, session } = useSessionKey();
 
     const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
@@ -134,6 +133,14 @@ export default function Setup() {
         setWalletOptions(discoverWallets());
     }, []);
 
+    async function getConnectedProvider(): Promise<ethers.BrowserProvider> {
+        const eth = (window as any).ethereum;
+        if (!eth) {
+            throw new Error("No wallet provider found");
+        }
+        return new ethers.BrowserProvider(eth);
+    }
+
     async function autoAdvanceAfterConnect(nextProvider: ethers.BrowserProvider, address: string) {
         let nextStep = 2;
         try {
@@ -165,7 +172,7 @@ export default function Setup() {
         }
 
         try {
-            const next = new ethers.BrowserProvider(eth);
+            let next = new ethers.BrowserProvider(eth);
             await next.send("eth_requestAccounts", []);
 
             // ✅ Check correct network
@@ -196,6 +203,9 @@ export default function Setup() {
                         });
                     }
                 }
+
+                // Recreate provider after a network switch to avoid stale-network errors.
+                next = new ethers.BrowserProvider(eth);
             }
 
             const signer = await next.getSigner();
@@ -241,17 +251,13 @@ export default function Setup() {
 
     // ✅ FIXED: Use native INJ deposit instead of USDT ERC-20
     async function depositUSDT() {
-        if (!provider) {
-            alert("Connect MetaMask first");
-            return;
-        }
-
         setDepositBusy(true);
         try {
-            const signer = await provider.getSigner();
+            const activeProvider = await getConnectedProvider();
+            const signer = await activeProvider.getSigner();
 
             // Verify correct network
-            const network = await provider.getNetwork();
+            const network = await activeProvider.getNetwork();
             if (Number(network.chainId) !== REQUIRED_CHAIN_ID) {
                 alert(`Wrong network!\n\nPlease switch MetaMask to:\nNetwork: Injective EVM Testnet\nChain ID: 1439\nRPC: https://k8s.testnet.json-rpc.injective.network`);
                 return;
@@ -276,7 +282,7 @@ export default function Setup() {
             await tx.wait();
             console.log("Deposit confirmed:", tx.hash);
             setStep(3);
-            await refreshBalances();
+            await refreshBalances(activeProvider);
 
         } catch (err: any) {
             console.error("Deposit failed:", err);
@@ -301,12 +307,12 @@ export default function Setup() {
     }, [provider, walletAddress, refreshBalances]);
 
     async function configureSessionKey() {
-        if (!provider) return;
         try {
-            const signer = await provider.getSigner();
+            const activeProvider = await getConnectedProvider();
+            const signer = await activeProvider.getSigner();
             const owner = await signer.getAddress();
 
-            const network = await provider.getNetwork();
+            const network = await activeProvider.getNetwork();
             if (Number(network.chainId) !== 1439) {
                 alert("Switch to Injective EVM Testnet (1439)");
                 return;
@@ -338,13 +344,14 @@ export default function Setup() {
     }
 
     async function addPaymasterStake() {
-        if (!provider || !PAYMASTER_ADDRESS) {
+        if (!PAYMASTER_ADDRESS) {
             alert("Set VITE_PAYMASTER_CONTRACT in frontend env.");
             return;
         }
         setFundingBusy(true);
         try {
-            const signer = await provider.getSigner();
+            const activeProvider = await getConnectedProvider();
+            const signer = await activeProvider.getSigner();
             const paymaster = new ethers.Contract(PAYMASTER_ADDRESS, paymasterAbi, signer);
             const tx = await paymaster.addStake(86400, {
                 value: ethers.parseEther(stakeInj || "0")
@@ -359,13 +366,14 @@ export default function Setup() {
     }
 
     async function depositPaymasterGas() {
-        if (!provider || !PAYMASTER_ADDRESS) {
+        if (!PAYMASTER_ADDRESS) {
             alert("Set VITE_PAYMASTER_CONTRACT in frontend env.");
             return;
         }
         setFundingBusy(true);
         try {
-            const signer = await provider.getSigner();
+            const activeProvider = await getConnectedProvider();
+            const signer = await activeProvider.getSigner();
             const paymaster = new ethers.Contract(PAYMASTER_ADDRESS, paymasterAbi, signer);
             const tx = await paymaster.depositToEntryPoint({
                 value: ethers.parseEther(sponsorInj || "0")
@@ -590,7 +598,7 @@ export default function Setup() {
                     Countdown: <span className="font-mono">{remainingText}</span>
                 </p>
                 <button
-                    onClick={() => nav("/terminal")}
+                    onClick={() => router.push("/terminal")}
                     disabled={step < 4}
                     className="mt-4 rounded-lg border border-white/20 px-4 py-2 disabled:opacity-40"
                 >

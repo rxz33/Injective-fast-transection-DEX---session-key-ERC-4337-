@@ -1,10 +1,12 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { ethers } from "ethers";
-import { useSessionKey } from "../hooks/useSessionKey";
-import { usePriceFeed } from "../hooks/usePriceFeed";
-import { useUserOp } from "../hooks/useUserOp";
-import { pollOrderStatus } from "../lib/injective";
-import { VAULT_ADDRESS, vaultAbi } from "../lib/contracts";
+import { useSessionKey } from "@/hooks/useSessionKey";
+import { usePriceFeed } from "@/hooks/usePriceFeed";
+import { useUserOp } from "@/hooks/useUserOp";
+import { pollOrderStatus } from "@/lib/injective";
+import { VAULT_ADDRESS, vaultAbi } from "@/lib/contracts";
 
 type TradeFeedItem = {
     side: "BUY" | "SELL";
@@ -17,7 +19,9 @@ type TradeFeedItem = {
 
 const PAIRS = ["INJ/USDT", "ETH/USDT", "BTC/USDT"];
 const TX_EXPLORER_BASE =
-    import.meta.env.VITE_TX_EXPLORER_BASE || "https://testnet.blockscout.injective.network/tx";
+    process.env.NEXT_PUBLIC_TX_EXPLORER_BASE ||
+    process.env.VITE_TX_EXPLORER_BASE ||
+    "https://testnet.blockscout.injective.network/tx";
 
 export default function Terminal() {
     const { session, remainingText } = useSessionKey();

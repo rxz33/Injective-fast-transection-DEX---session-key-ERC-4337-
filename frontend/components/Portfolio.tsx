@@ -1,7 +1,9 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { ethers } from "ethers";
-import { SMART_ACCOUNT_FACTORY, factoryAbi, smartAccountAbi } from "../lib/contracts";
-import { useSessionKey } from "../hooks/useSessionKey";
+import { SMART_ACCOUNT_FACTORY, factoryAbi, smartAccountAbi } from "@/lib/contracts";
+import { useSessionKey } from "@/hooks/useSessionKey";
 
 type HistoryRow = {
     pair: string;
@@ -14,7 +16,9 @@ type HistoryRow = {
 };
 
 const TX_EXPLORER_BASE =
-    import.meta.env.VITE_TX_EXPLORER_BASE || "https://testnet.blockscout.injective.network/tx";
+    process.env.NEXT_PUBLIC_TX_EXPLORER_BASE ||
+    process.env.VITE_TX_EXPLORER_BASE ||
+    "https://testnet.blockscout.injective.network/tx";
 
 export default function Portfolio() {
     const { session, remainingText, clearSession } = useSessionKey();

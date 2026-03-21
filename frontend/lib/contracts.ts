@@ -1,8 +1,8 @@
-export const ENTRYPOINT = import.meta.env.VITE_ENTRYPOINT || "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
-export const VAULT_ADDRESS = import.meta.env.VITE_VAULT_CONTRACT || "";
-export const SESSION_KEY_CONTRACT = import.meta.env.VITE_SESSION_KEY_CONTRACT || "";
-export const SMART_ACCOUNT_FACTORY = import.meta.env.VITE_SMART_ACCOUNT_FACTORY || "";
-export const PAYMASTER_ADDRESS = import.meta.env.VITE_PAYMASTER_CONTRACT || "";
+export const ENTRYPOINT = process.env.NEXT_PUBLIC_ENTRYPOINT || "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
+export const VAULT_ADDRESS = process.env.NEXT_PUBLIC_VAULT_CONTRACT || "";
+export const SESSION_KEY_CONTRACT = process.env.NEXT_PUBLIC_SESSION_KEY_CONTRACT || "";
+export const SMART_ACCOUNT_FACTORY = process.env.NEXT_PUBLIC_SMART_ACCOUNT_FACTORY || "";
+export const PAYMASTER_ADDRESS = process.env.NEXT_PUBLIC_PAYMASTER_CONTRACT || "";
 
 export const vaultAbi = [
     "function deposit(address token, uint256 amount)",

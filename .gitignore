@@ -5,4 +5,6 @@ cache
 dist
 coverage
 frontend/dist
+frontend/.next
+frontend/node_modules
 relay/dist

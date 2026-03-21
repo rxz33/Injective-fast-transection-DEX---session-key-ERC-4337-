@@ -1,4 +1,4 @@
-const RELAY_BASE = import.meta.env.VITE_RELAY_URL || "http://localhost:8787";
+const RELAY_BASE = process.env.NEXT_PUBLIC_RELAY_URL || process.env.VITE_RELAY_URL || "http://localhost:8787";
 
 export async function fetchOrderbook(pair: string) {
     const res = await fetch(`${RELAY_BASE}/api/orderbook/${encodeURIComponent(pair)}`);
