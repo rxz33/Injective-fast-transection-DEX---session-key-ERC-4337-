@@ -11,12 +11,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "AfriFi — 1-Click Trading Terminal on Injective inEVM",
+    title: "InstaInject: Instant Trades On Injective",
     description:
         "Gasless, popup-free trading on Injective inEVM using ERC-4337 smart accounts, paymasters, and on-chain session keys enforced in Solidity.",
-    keywords: ["AfriFi", "ERC-4337", "account abstraction", "Injective", "inEVM", "session keys", "paymaster", "gasless trading"],
+    keywords: ["InstaInject", "ERC-4337", "account abstraction", "Injective", "inEVM", "session keys", "paymaster", "gasless trading"],
     openGraph: {
-        title: "AfriFi — 1-Click Trading Terminal",
+        title: "InstaInject - instant trades on injective",
         description: "Popup-free, gasless trading on Injective inEVM with ERC-4337 session keys",
         type: "website",
     },

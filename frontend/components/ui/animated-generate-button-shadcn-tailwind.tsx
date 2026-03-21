@@ -29,7 +29,7 @@ export default function AnimatedGenerateButton({
   ariaLabel,
 }: AnimatedGenerateButtonProps) {
   return (
-    <div className={clsx("relative inline-block", className)} id={id}>
+    <div className={clsx("relative w-full block", className)} id={id}>
       <button
         type={type}
         aria-label={ariaLabel || (generating ? labelActive : labelIdle)}
@@ -38,9 +38,9 @@ export default function AnimatedGenerateButton({
         onClick={onClick}
         className={clsx(
           "ui-anim-btn",
-          "relative flex items-center justify-center cursor-pointer select-none",
-          "rounded-[24px] px-4 py-2",
-          "bg-[hsl(var(--background))] text-[hsl(var(--foreground))]",
+          "relative w-full flex items-center justify-center cursor-pointer select-none",
+          "rounded-2xl px-6 py-2",
+          "bg-background text-foreground",
           "border border-[hsl(var(--border))]/20",
           "shadow-[inset_0px_1px_1px_rgba(255,255,255,0.2),inset_0px_2px_2px_rgba(255,255,255,0.15),inset_0px_4px_4px_rgba(255,255,255,0.1),inset_0px_8px_8px_rgba(255,255,255,0.05),inset_0px_16px_16px_rgba(255,255,255,0.05),0_-1px_1px_rgba(0,0,0,0.02),0_-2px_2px_rgba(0,0,0,0.03),0_-4px_4px_rgba(0,0,0,0.05),0_-8px_8px_rgba(0,0,0,0.06),0_-16px_16px_rgba(0,0,0,0.08)]",
           "transition-[box-shadow,border,background-color] duration-400"
@@ -54,7 +54,7 @@ export default function AnimatedGenerateButton({
         {showIcon ? (
           <svg
             className={clsx(
-              "ui-anim-btn-svg mr-2 h-6 w-6 flex-grow-0",
+              "ui-anim-btn-svg mr-2 h-6 w-6 grow-0",
               "fill-[color:var(--ui-anim-svg-fill)]",
               "transition-[fill,filter,opacity] duration-400"
             )}
@@ -70,10 +70,10 @@ export default function AnimatedGenerateButton({
           </svg>
         ) : null}
 
-        <div className="ui-anim-txt-wrapper relative flex min-h-[1.5rem] w-full items-center justify-center">
+        <div className="ui-anim-txt-wrapper relative flex min-h-6 w-full items-center justify-center px-2">
           <div
             className={clsx(
-              "ui-anim-txt-1 absolute inset-0 flex items-center justify-center whitespace-nowrap",
+              "ui-anim-txt-1 absolute inset-0 flex items-center justify-center break-all text-center leading-tight",
               generating ? "opacity-0" : "animate-[ui-appear_1s_ease-in-out_forwards]"
             )}
           >
@@ -82,7 +82,7 @@ export default function AnimatedGenerateButton({
 
           <div
             className={clsx(
-              "ui-anim-txt-2 absolute inset-0 flex items-center justify-center whitespace-nowrap",
+              "ui-anim-txt-2 absolute inset-0 flex items-center justify-center break-all text-center leading-tight",
               generating ? "opacity-100 animate-pulse" : "opacity-0 pointer-events-none"
             )}
           >

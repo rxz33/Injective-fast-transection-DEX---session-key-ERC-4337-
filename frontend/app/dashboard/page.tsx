@@ -117,6 +117,11 @@ export default function DashboardPage() {
         animate="visible"
         className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-5 md:px-6"
       >
+        {/* Sample Data Label */}
+        <motion.div variants={fadeInUp} className="text-sm text-foreground/60">
+          * Sample data
+        </motion.div>
+
         {/* ── METRIC STRIP ── */}
         <motion.div
           variants={fadeInUp}

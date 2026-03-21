@@ -102,7 +102,7 @@ function Navbar() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/80 backdrop-blur-xl shadow-lg shadow-black/20" : ""}`}>
       <div className="w-full py-4 px-8 flex flex-row items-center justify-between max-w-[1400px] mx-auto">
-        <Link href="/" className="flex items-center leading-none text-foreground hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 leading-none text-foreground hover:opacity-80 transition-opacity">
           <Image
             src="/instainject-logo.png"
             alt="InstaInject"
@@ -115,7 +115,7 @@ function Navbar() {
             className="block max-h-12 w-auto"
             style={{ height: "auto", objectFit: "contain" }}
           />
-          <span className="sr-only">InstaInject</span>
+          <span className="hidden sm:inline text-base font-bold">InstaInject</span>
         </Link>
         <div className="hidden md:flex flex-row items-center gap-0.5">
           <Button asChild variant="ghost" className="text-foreground/80 text-[15px] font-normal hover:bg-primary/5 hover:text-foreground h-10 px-4 transition-colors">

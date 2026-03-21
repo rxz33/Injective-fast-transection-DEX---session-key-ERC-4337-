@@ -18,9 +18,8 @@ export default function Header({ onWalletConnect, walletAddress }: HeaderProps) 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Setup", href: "/setup" },
-    { label: "Terminal", href: "/trade" },
+    { label: "Trade", href: "/trade" },
     { label: "Portfolio", href: "/portfolio" },
-    { label: "History", href: "/dashboard#history" },
   ];
 
   const handleConnect = async () => {
@@ -48,7 +47,7 @@ export default function Header({ onWalletConnect, walletAddress }: HeaderProps) 
     >
       {/* LOGO */}
       {/* Keep logo sizing controlled by max-height to prevent layout shifts */}
-      <Link href="/" className="flex items-center" style={{ textDecoration: "none" }}>
+      <Link href="/" className="flex items-center gap-2" style={{ textDecoration: "none" }}>
         <Image
           src="/instainject-logo.png"
           alt="InstaInject"
@@ -60,6 +59,7 @@ export default function Header({ onWalletConnect, walletAddress }: HeaderProps) 
           sizes="(max-width: 640px) 64px, 80px"
           style={{ display: "block", maxHeight: 36, width: "auto", height: "auto", objectFit: "contain" }}
         />
+        <span className="hidden sm:inline text-base font-bold text-foreground">InstaInject</span>
       </Link>
 
       {/* NAV */}
