@@ -27,7 +27,7 @@ export default function Terminal() {
   const [sellQty, setSellQty] = useState("5");
   const [feed, setFeed] = useState<TradeFeedItem[]>([]);
   const [tradesToday, setTradesToday] = useState(0);
-  const [vaultInjBalance, setVaultInjBalance] = useState("-");
+  const [vaultInjBalance, setVaultInjBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [executingSide, setExecutingSide] = useState<0 | 1 | null>(null);
@@ -39,6 +39,7 @@ export default function Terminal() {
     async (nextProvider?: ethers.BrowserProvider, nextAddress?: string) => {
       const eth = (window as any).ethereum;
       if (!eth) return;
+      if (!VAULT_ADDRESS) return;
       const p = nextProvider || new ethers.BrowserProvider(eth);
       const address = nextAddress || walletAddress;
       if (!address) return;
@@ -50,10 +51,10 @@ export default function Terminal() {
           vaultAbi,
           p,
         ).getBalance(address, ethers.ZeroAddress);
-        setVaultInjBalance(Number(ethers.formatEther(vaultBal)).toFixed(4));
+        setVaultInjBalance(Number(ethers.formatEther(vaultBal)));
       } catch (err) {
         console.warn("Failed to refresh balances", err);
-        setVaultInjBalance("-");
+        setVaultInjBalance(null);
       } finally {
         setBalanceLoading(false);
       }
@@ -106,8 +107,13 @@ export default function Terminal() {
       return;
     }
 
+    if (vaultInjBalance === null) {
+      alert("Balance not loaded yet");
+      return;
+    }
+
     const qty = Number(qtyText || "0");
-    const vaultNum = Number(vaultInjBalance) || 0;
+    const vaultNum = vaultInjBalance;
 
     if (vaultNum === 0 || qty > vaultNum) {
       alert("You have low or zero balance in vault");
@@ -212,7 +218,8 @@ export default function Terminal() {
                 balanceLoading ? "text-accent animate-pulse" : "text-accent"
               }`}
             >
-              {vaultInjBalance} <span className="text-[10px]">INJ</span>
+              {vaultInjBalance === null ? "-" : vaultInjBalance.toFixed(4)}{" "}
+              <span className="text-[10px]">INJ</span>
             </span>
           </div>
         </div>
@@ -320,7 +327,7 @@ export default function Terminal() {
                           : "text-foreground"
                       }
                     >
-                      {vaultInjBalance} INJ
+                      {vaultInjBalance === null ? "-" : vaultInjBalance.toFixed(4)} INJ
                     </span>
                   </div>
                 </div>
@@ -341,9 +348,13 @@ export default function Terminal() {
               <AnimatedGenerateButton
                 className="w-full h-14 flex items-center justify-center text-base font-bold tracking-wide"
                 labelIdle={
-                  Number(vaultInjBalance) === 0
+                  !session
+                    ? "SETUP REQUIRED"
+                    : vaultInjBalance === null
+                    ? "LOADING"
+                    : vaultInjBalance === 0
                     ? "ZERO BALANCE"
-                    : Number(buyQty) > Number(vaultInjBalance)
+                    : Number(buyQty) > vaultInjBalance
                     ? "INSUFFICIENT BALANCE"
                     : "1 CLICK BUY"
                 }
@@ -353,8 +364,10 @@ export default function Terminal() {
                 showIcon={false}
                 disabled={
                   executingSide !== null ||
-                  Number(buyQty) > Number(vaultInjBalance) ||
-                  Number(vaultInjBalance) === 0
+                  !session ||
+                  vaultInjBalance === null ||
+                  Number(buyQty) > vaultInjBalance ||
+                  vaultInjBalance === 0
                 }
                 onClick={() => runTrade(0, buyQty)}
               />
@@ -362,9 +375,13 @@ export default function Terminal() {
               <AnimatedGenerateButton
                 className="w-full h-14 flex items-center justify-center text-base font-bold tracking-wide"
                 labelIdle={
-                  Number(vaultInjBalance) === 0
+                  !session
+                    ? "SETUP REQUIRED"
+                    : vaultInjBalance === null
+                    ? "LOADING"
+                    : vaultInjBalance === 0
                     ? "ZERO BALANCE"
-                    : Number(sellQty) > Number(vaultInjBalance)
+                    : Number(sellQty) > vaultInjBalance
                     ? "INSUFFICIENT BALANCE"
                     : "1 CLICK SELL"
                 }
@@ -374,8 +391,10 @@ export default function Terminal() {
                 showIcon={false}
                 disabled={
                   executingSide !== null ||
-                  Number(sellQty) > Number(vaultInjBalance) ||
-                  Number(vaultInjBalance) === 0
+                  !session ||
+                  vaultInjBalance === null ||
+                  Number(sellQty) > vaultInjBalance ||
+                  vaultInjBalance === 0
                 }
                 onClick={() => runTrade(1, sellQty)}
               />
