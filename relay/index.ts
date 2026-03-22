@@ -75,7 +75,7 @@ async function bootListener() {
     }
 
     const signer = new ethers.Wallet(RELAY_SIGNER_EVM_PRIVATE_KEY);
-    const vaultWriter = getVaultWriteContract(INEVM_RPC_URL, VAULT, signer);
+    const vaultWriter = await getVaultWriteContract(VAULT, signer);
 
     // ✅ pass INEVM_RPC_URL as first arg — listener ignores WS and uses HTTP
     await startVaultListener(INEVM_RPC_URL, VAULT, async ({ user, pair, qty, side }) => {

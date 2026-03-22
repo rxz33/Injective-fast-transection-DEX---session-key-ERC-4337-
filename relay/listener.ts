@@ -108,12 +108,11 @@ export async function startVaultListener(
     return { provider, vault };
 }
 
-export function getVaultWriteContract(
-    rpcUrl: string,
+export async function getVaultWriteContract(
     vaultAddress: string,
     signer: ethers.Wallet
 ) {
-    const provider = createHttpProvider(rpcUrl);
+    const { provider } = await selectHealthyProvider();
     const connectedSigner = signer.connect(provider);
     return new ethers.Contract(ethers.getAddress(vaultAddress.toLowerCase()), vaultAbi, connectedSigner);
 }
