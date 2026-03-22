@@ -53,10 +53,10 @@ export default function Setup() {
 
             setBalanceLoading(true);
             try {
-                const checksumAddress = ethers.getAddress(address);
+                const checksumAddress = ethers.getAddress(address.toLowerCase());
                 const [walletBal, vaultBal] = await Promise.all([
                     p.getBalance(checksumAddress),
-                    new ethers.Contract(ethers.getAddress(VAULT_ADDRESS), vaultAbi, p).getBalance(checksumAddress, ethers.ZeroAddress)
+                    new ethers.Contract(ethers.getAddress(VAULT_ADDRESS.toLowerCase()), vaultAbi, p).getBalance(checksumAddress, ethers.ZeroAddress)
                 ]);
                 setWalletInjBalance(Number(ethers.formatEther(walletBal)).toFixed(4));
                 setVaultInjBalance(Number(ethers.formatEther(vaultBal)).toFixed(4));
@@ -168,7 +168,7 @@ export default function Setup() {
 
             const amount = depositAmount || "0.1";
             const tx = await signer.sendTransaction({
-                to: ethers.getAddress(VAULT_ADDRESS),
+                to: ethers.getAddress(VAULT_ADDRESS.toLowerCase()),
                 value: ethers.parseEther(amount),
                 gasLimit: 100000,
             });

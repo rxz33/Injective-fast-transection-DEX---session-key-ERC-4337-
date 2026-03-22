@@ -68,7 +68,7 @@ export async function startVaultListener(
     const { provider, rpcUrl } = await selectHealthyProvider();
     console.log(`Event listener using HTTP polling → ${rpcUrl}`);
 
-    const vault = new ethers.Contract(vaultAddress, vaultAbi, provider);
+    const vault = new ethers.Contract(ethers.getAddress(vaultAddress.toLowerCase()), vaultAbi, provider);
     const seenEvents = new Set<string>();
     vault.on(
         "TradeRequested",
@@ -115,5 +115,5 @@ export function getVaultWriteContract(
 ) {
     const provider = createHttpProvider(rpcUrl);
     const connectedSigner = signer.connect(provider);
-    return new ethers.Contract(vaultAddress, vaultAbi, connectedSigner);
+    return new ethers.Contract(ethers.getAddress(vaultAddress.toLowerCase()), vaultAbi, connectedSigner);
 }

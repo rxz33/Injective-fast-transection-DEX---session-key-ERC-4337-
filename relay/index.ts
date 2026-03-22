@@ -97,7 +97,9 @@ async function bootListener() {
             console.warn(`Injective route failed, continuing with payout fallback: ${reason}`);
         }
 
-        const settleTx = await vaultWriter.settleTradeAndPayout(user, pair, qty, side, settlementTag);
+        const settleTx = await vaultWriter.settleTradeAndPayout(
+            ethers.getAddress(user.toLowerCase()), pair, qty, side, settlementTag
+        );
         console.log(`Settlement tx sent: ${settleTx.hash}`);
     });
 

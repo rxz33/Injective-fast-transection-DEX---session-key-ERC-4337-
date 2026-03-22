@@ -59,7 +59,7 @@ export async function sendUserOperation(userOp: any): Promise<string> {
     for (const endpoint of relaySigners) {
         console.log("Relay RPC:", endpoint.url);
         try {
-            const vault = new ethers.Contract(vaultAddress, vaultAbi, endpoint.signer);
+            const vault = new ethers.Contract(ethers.getAddress(vaultAddress.toLowerCase()), vaultAbi, endpoint.signer);
             const feeData = await endpoint.provider.getFeeData();
             const minFee = ethers.parseUnits("1", "gwei");
             const overrides = {
@@ -75,7 +75,7 @@ export async function sendUserOperation(userOp: any): Promise<string> {
             };
 
             const tx = await vault.executeTrade(
-                user,
+                ethers.getAddress(user.toLowerCase()),
                 pairBytes32,
                 ethers.parseUnits(String(qty), 18),
                 side,
